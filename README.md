@@ -1,198 +1,197 @@
-# 🎬 Online Movie Ticket Booking Platform (B2B + B2C)
+# XYZ Movie Ticket Booking Platform
 
-## Overview
+This is a **Spring Boot** application implementing a simple movie ticket booking platform that supports both **B2B (theatre partners)** and **B2C (end customers)** workflows.
 
-This project is a **minimal backend implementation** of an online movie ticket booking platform that supports:
-
-- **B2B**: Theatre partners onboarding their theatres
-- **B2C**: End customers browsing shows and booking tickets
-
-The objective of this assignment is to demonstrate **system design thinking, clean API design, transactional handling, and extensibility**, rather than building a complete production-ready system.
+The app uses an **H2 in-memory database** for data persistence and demonstrates key features like **browsing movies, onboarding theatres, and booking tickets** with discount rules.
 
 ---
 
-## Key Goals Covered
+## Key Features
 
-### Theatre Partner Enablement (B2B)
-- Enable theatre partners to onboard their theatres on the platform
-- Allow theatres to expose their shows digitally to customers
+### 1. Theatre Management (B2B)
+- Onboard new theatres.
+- Add shows for the theatres.
 
-### Customer Enablement (B2C)
-- Browse movies and shows by city
-- Book tickets in advance by selecting seats
-- Apply simple offers during booking
+### 2. Browse Movies & Shows (B2C)
+- Browse movies across **cities**.
+- Optional filters: **movieId, language, genre, date**.
+- Return all shows matching the filters.
 
----
-
-## Scope of Implementation
-
-### Implemented (Code)
-- Theatre onboarding API
-- Browse shows API (mocked)
-- Ticket booking API
-- Seat locking to prevent double booking
-- Discount logic using Strategy Pattern
-- In-memory data storage
-
-### Not Implemented (Covered in Design / Discussion)
-- UI / Frontend
-- Authentication & Authorization
-- Payment gateway integration
-- Database (JPA / SQL / NoSQL)
-- Caching (Redis)
-- Messaging (Kafka)
-- CI/CD & deployment
-
-> These components are intentionally excluded to keep the solution focused and aligned with the assignment requirements.
+### 3. Booking Tickets (B2C)
+- Book tickets for a specific **showId**.
+- Prevents **double booking** using in-memory seat locks.
+- Applies **50% discount on the 3rd ticket** automatically.
+- Stores booking info in **H2 DB**.
 
 ---
 
-## Technology Stack
+## Technologies Used
 
-- **Language**: Java 17
-- **Framework**: Spring Boot
-- **Build Tool**: Maven
-- **Dependencies**:
-  - Spring Web
-  - Lombok
-- **Storage**: In-memory collections
-
----
-
-## Project Structure
-
-com.xyz.moviebooking
-├── controller
-│ ├── TheatreController.java
-│ ├── ShowController.java
-│ └── BookingController.java
-├── service
-│ ├── TheatreService.java
-│ └── BookingService.java
-├── repository
-│ ├── TheatreRepository.java
-│ └── SeatRepository.java
-├── model
-│ ├── Theatre.java
-│ ├── Show.java
-│ ├── Booking.java
-│ └── Seat.java
-└── discount
-├── DiscountStrategy.java
-└── ThirdTicketDiscount.java
-
+- **Java 17** / Spring Boot 3  
+- **Spring Data JPA**  
+- **H2 In-Memory Database**  
+- **Lombok** (`@Data`, `@Builder`)  
+- **ConcurrentHashMap** for seat locking  
+- REST APIs using Spring Web
 
 ---
+
+## Database Setup (H2)
+
+**application.properties:**
+
+```properties
+spring.datasource.url=jdbc:h2:mem:movie-db
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=create
+spring.jpa.show-sql=true
+
+spring.sql.init.mode=always
+
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+```
+
+### Access H2 Console:
+http://localhost:8080/h2-console
+
+JDBC URL: jdbc:h2:mem:movie-db
+
+Username: sa
+
+Password: (leave empty)
 
 ## API Endpoints
 
-### 1. Theatre Onboarding (B2B)
+### 1️⃣ Theatre APIs
 
-**POST** `/theatres`
+#### Onboard Theatre
 
-**Request**
+**POST /api/theatres**
+
+**Request:**
 ```json
 {
-  "name": "PVR Cinemas",
+  "theatreId": "T1",
+  "name": "PVR Bangalore Central",
   "city": "Bangalore"
 }
 ```
 
-**Response**
+**Response:**
 ```json
 {
-  "id": "uuid",
-  "name": "PVR Cinemas",
+  "id": 1,
+  "theatreId": "T1",
+  "name": "PVR Bangalore Central",
   "city": "Bangalore"
 }
 ```
 
-### 2. Browse Shows (B2C – Read Scenario)
-**GET** `/movies/{movieId}/shows?city=Bangalore`
-**Response**
+
+#### Add Show to Theatre
+
+**POST /api/theatres/shows**
+
+**Request:**
 ```json
+{
+  "showId": "S1",
+  "theatreId": "T1",
+  "movieId": "M1",
+  "language": "English",
+  "genre": "Action",
+  "showDate": "2026-01-21",
+  "showTime": "14:00",
+  "ticketPrice": 200
+}
+```
+
+**Response:**
+```
+200 OK  
+```
+
+### 2️⃣ Browse API
+
+**GET /api/browse/shows**
+* city (mandatory)
+* movieId (optional)
+* language (optional)
+* genre (optional)
+* date (optional, format YYYY-MM-DD)
+
+**Request:**
+```json
+GET /api/browse/shows?city=Bangalore&genre=Action&date=2026-01-21
+```
+
+**Response:**
+```
 [
   {
-    "id": "S1",
+    "id": 1,
+    "showId": "S1",
+    "theatreId": "T1",
     "movieId": "M1",
-    "city": "Bangalore",
-    "showTime": "14:00"
+    "language": "English",
+    "genre": "Action",
+    "showDate": "2026-01-21",
+    "showTime": "14:00",
+    "ticketPrice": 200.0
+  },
+  {
+    "id": 2,
+    "showId": "S2",
+    "theatreId": "T1",
+    "movieId": "M1",
+    "language": "English",
+    "genre": "Action",
+    "showDate": "2026-01-21",
+    "showTime": "19:00",
+    "ticketPrice": 220.0
   }
 ]
+
 ```
 
-### 3. Book Tickets (B2C – Write Scenario)
-**POST** `/bookings`
+### 3️⃣ Booking API
 
-**Request**
+**POST /api/booking/book**
+**Query Parameter**: showId (string, mandatory)
+
+**Request:**
 ```json
-{
-  "showId": "S1",
-  "showTime": "14:00",
-  "seatIds": ["A1", "A2", "A3"]
-}
+["A1","A2","A3"]
 ```
 
-**Response**
-```json
+**Response:**
+```
 {
-  "bookingId": "uuid",
+  "id": 1,
+  "bookingId": "7d3f5c3f-xxxx-xxxx-xxxx-abcdef123456",
   "showId": "S1",
-  "seatIds": ["A1", "A2", "A3"],
-  "amount": 500
+  "theatreId": "T1",
+  "movieId": "M1",
+  "city": "Bangalore",
+  "seatNumbers": ["A1","A2","A3"],
+  "totalPrice": 500.0,
+  "status": "CONFIRMED",
+  "bookingTime": "2026-01-21T10:30:00"
 }
+
 ```
 
-## Seat Locking & Concurrency Handling
 
-- Seat locking is implemented using `ConcurrentHashMap`
-- Each seat is locked before confirming a booking
-- Prevents double booking in concurrent requests
+**Notes:**
 
-**In production, this can be replaced with:**
-- Redis with TTL
-- Database row-level locking
+The **3rd seat (A3)** automatically gets **50% discount**.
 
----
-
-## Discount Logic
-
-Discounts are implemented using the **Strategy Pattern** for extensibility.
-
-### Implemented Rule
-- **50% discount on the third ticket**
-
-### This design allows:
-- Adding new discount rules without modifying booking logic
-- Supporting city, theatre, or time-based offers
-
----
-
-## Transactional Considerations (Design)
-
-- Booking is treated as a single logical transaction
-- If any seat cannot be locked, the booking fails
-- Payment flow is not implemented but designed to support a **Saga-based approach** in the future
-
----
-
-## Scalability & Availability (Design)
-
-- Stateless services for horizontal scaling
-- City-based data partitioning
-- Designed to achieve **99.99% availability** using:
-  - Load balancers
-  - Multi-AZ deployments
-  - Read replicas
-
----
-
-## Security Considerations (Design)
-
-- Input validation
-- API rate limiting via gateway (future)
-- OAuth2 / JWT for authentication (future)
-- OWASP Top 10 considerations discussed at design level
+Booking fails if **any seat is already locked.**
 
 ---
 
@@ -215,5 +214,8 @@ Application runs on:
 ```
 http://localhost:8080
 ```
+
+
+
 
 
