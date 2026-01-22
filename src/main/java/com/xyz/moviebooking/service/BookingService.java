@@ -63,7 +63,7 @@ public class BookingService {
         for(String seat: seatNumbers){
             locks.put(seat, false);
         }
-        return booking;
+        return bookingRepository.save(booking);
     }
 
 }
