@@ -215,6 +215,70 @@ Application runs on:
 http://localhost:8080
 ```
 
+## High-Level Design (HLD)
+
+The platform follows a layered, service-oriented architecture designed to support both B2B (theatre partners) and B2C (end customers).
+
+The system is structured into the following layers:
+
+- API Layer  
+  Spring Boot REST controllers handle requests for theatre onboarding, browsing shows, and booking tickets.
+
+- Service Layer  
+  Contains core business logic such as browsing filters, booking validation, seat locking, and discount application.
+
+- Persistence Layer  
+  Uses Spring Data JPA with an in-memory H2 database for development and evaluation.  
+  The design allows easy migration to a production-grade relational database.
+
+- Database  
+  Stores theatres, shows, and bookings with clear relationships and transactional boundaries.
+
+The application is stateless, allowing horizontal scaling behind a load balancer.  
+Future extensions include payment gateway integration, caching, and asynchronous workflows.
+
+HLD Diagram Reference:  
+docs/hdl/hld.png
+
+
+## Low-Level Design (LLD)
+
+### Entity Relationship Design (ERD)
+
+The low-level design focuses on domain-driven modeling with clear entity boundaries.
+
+Core entities:
+
+- Theatre  
+  Represents a theatre partner onboarded onto the platform.
+
+- Show  
+  Represents a movie show running in a theatre on a specific date, including language and genre.
+
+- Booking  
+  Represents a ticket booking made by an end customer for a specific show.
+
+Relationships:
+
+- One Theatre can have multiple Shows (1:N)
+- One Show can have multiple Bookings (1:N)
+
+Identifier strategy:
+
+- Database-generated IDs are used internally for persistence.
+- Business identifiers (theatreId, showId, bookingId) are exposed through APIs to ensure stability and future integrations.
+
+
+
+LLD / ERD Diagram Reference:  
+docs/lld/erd.png
+docs/lld/lld.png
+
+## Design Notes
+
+- The design supports future enhancements such as seat-level persistence, payment workflows, and booking cancellations.
+- H2 in-memory database is used for simplicity and fast iteration.
+- The HLD and LLD are aligned with the implemented Spring Boot services.
 
 
 
